@@ -442,9 +442,9 @@ END GROUP
                 0x000000c6                __vector_20
                 0x000000c8                . = ALIGN (0x2)
  *(.text.*)
- .text.ultrasonic_send_pulse
+ .text.sendUSPulse
                 0x000000c8        0xe main.o
-                0x000000c8                ultrasonic_send_pulse
+                0x000000c8                sendUSPulse
  .text.setDisplayState
                 0x000000d6       0x40 main.o
                 0x000000d6                setDisplayState
@@ -759,14 +759,14 @@ END GROUP
  .debug_frame   0x000000b8       0xc4 Tools/LCD.o
  .debug_frame   0x0000017c       0x44 Tools/Tools.o
 
-.debug_str      0x00000000      0x6df
+.debug_str      0x00000000      0x6d5
  *(.debug_str)
  .debug_str     0x00000000      0x27d D:/Program Files/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega128/avr51/crtatmega128.o
- .debug_str     0x0000027d      0x396 main.o
-                                0x3cf (size before relaxing)
- .debug_str     0x00000613       0xac Tools/LCD.o
+ .debug_str     0x0000027d      0x38c main.o
+                                0x3c5 (size before relaxing)
+ .debug_str     0x00000609       0xac Tools/LCD.o
                                 0x2a6 (size before relaxing)
- .debug_str     0x000006bf       0x20 Tools/Tools.o
+ .debug_str     0x000006b5       0x20 Tools/Tools.o
                                 0x242 (size before relaxing)
 
 .debug_loc      0x00000000      0x493

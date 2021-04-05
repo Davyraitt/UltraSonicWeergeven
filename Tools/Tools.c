@@ -29,6 +29,6 @@ void configurePins(){
 	DDRA = 0b11111111;	// All pins PORTA are set to output (displaying us values)
 	DDRB = 0xFF; //	Put DDRB on output. Trigger is in B0 in our case.
 	DDRD = 0x00; //	port D pin 0 on input. 0 is echo and also interrupt
-	DDRG &= ~(1 << PING0);
+	DDRG &= ~(1 << PING0); // Setting PING0 bit in data direction, also called input
 }
 

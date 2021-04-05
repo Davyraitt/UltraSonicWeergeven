@@ -19,7 +19,7 @@ static enum interrupt_status interrupt_state = INTERRUPT_RISING; // starting the
 enum display_status display_state = CENTIMETER; // starting the display in CM
 
 
-void ultrasonic_send_pulse()
+void sendUSPulse()
 {
 	PORTB = 0x00; // 10 us low pulse
 	wait_us(10);
@@ -130,34 +130,23 @@ void writeDistanceToLCD()
 	wait_ms(5000);
 }
 
-ISR(INT0_vect) // interrupt ultrasonic
+ISR(INT0_vect) 
 {
-	// if the interrupt was generated on a rising edge (start sending echo)
-	if (interrupt_state == INTERRUPT_RISING)
-	{
-		// set interrupt pin 0 on PORTD to falling edge
-		EICRA = 0x02;
-		
-		// reset the time in timer1
-		TCNT1 = 0x00;
-		
-		// set interrupt status
-		interrupt_state = INTERRUPT_FALLING;
+		// INTERRUPT OP PD0 AANGEROEPEN
+		if (interrupt_state == INTERRUPT_RISING) // ALS DE INTERRUPT GEGENEREERD WERD DOOR EEN RISING EDGE
+		{
+		EICRA = 0x02; // DAN WILLEN WE NU DAT ER EEN INTERRUPT GEGENEREERD WORDT BIJ EEN FALLING EDGE (PD0)
+		TCNT1 = 0x00; // RESET DE TIJD VAN TIMER1
+		interrupt_state = INTERRUPT_FALLING; // INTERRUPT STATUS WORDT DUS FALLING, DOOR EICRA = 0x02; 
 		} 
 		
-		else 
-		// else if it was generated on a falling edge (end sending echo)
+		
+		else // ALS DE INTERRUPT NIET GEGENEREERD WERD DOOR EEN RISING, WAS HET WEL EEN FALLING EDGE (HET EINDE VAN DE ECHO DUS)
 		{
-		// set interrupt pin 0 on PORTD to rising edge
-		EICRA = 0x03;
-		
-		// read timer1 into time_dist
-		timer_dist = TCNT1;
-		
-		// set interrupt status
-		interrupt_state = INTERRUPT_RISING;
-	}
-	
+		EICRA = 0x03; // NU WILLEN WE WEER DAT DE INTERRUPT GEGENEREERD WORDT BIJ EEN RISING EDGE (PD0)
+		timer_dist = TCNT1; // TIJD INLEZEN NAAR VARIABEL timer_dist
+		interrupt_state = INTERRUPT_RISING; // INTERRUPT STATUS WORDT DUS RISING, DOOR EICRA = 0x03; 
+		}
 }
 
 
@@ -167,16 +156,15 @@ int main( void )
 	configurePins();
 	
 	EICRA = 0x03; // interrupt PORTD on pin 0, rising edge
-	EIMSK |= 0x01; // enable interrupt on pin 0 (INT0)
+	EIMSK |= 0x01; // enable interrupt on pin 0 (INT0) , When set to '1' then the External Interrupt feature is enabled.
 	TCCR1A = 0b00000000; // initialize timer1, prescaler=256
 	TCCR1B = 0b00001100; // CTC compare A, RUN
 	//TCCR1A and TCCR1B are different registers, but they work on the same timer, timer1. 
 	//They configure different behavior and are located in separate registers, simply because all the bits don't fit in a single byte.
-	
 	sei(); // sei sets the bit and switches interrupts on
 	
-	init_4bits_mode(); // LCD Init 4 bit mode
 	
+	init_4bits_mode(); // LCD Init 4 bit mode
 	lcd_write_string("Starting US....");
 	wait_ms (3000);
 	
@@ -184,11 +172,12 @@ int main( void )
 	
 	while (1)
 	{
-		ultrasonic_send_pulse();
+		sendUSPulse();
 		distance = timer_dist * (340 / 2 );
 		
 		//my measurements: 18cm is 5400, 8 cm is 2380
 		//which means 1cm is around 297, so we divide by it
+		
 		distanceInCM = round(distance / 297);
 		if (distance > 0) {		
 			writeDistanceToLCD();

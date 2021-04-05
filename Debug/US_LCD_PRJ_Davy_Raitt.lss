@@ -23,11 +23,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
   9 .debug_frame  000001c0  00000000  00000000  00003850  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    000006df  00000000  00000000  00003a10  2**0
+ 10 .debug_str    000006d5  00000000  00000000  00003a10  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    00000493  00000000  00000000  000040ef  2**0
+ 11 .debug_loc    00000493  00000000  00000000  000040e5  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 00000098  00000000  00000000  00004582  2**0
+ 12 .debug_ranges 00000098  00000000  00000000  00004578  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -146,11 +146,11 @@ Disassembly of section .text:
 000000c6 <__bad_interrupt>:
       c6:	9c cf       	rjmp	.-200    	; 0x0 <__vectors>
 
-000000c8 <ultrasonic_send_pulse>:
+000000c8 <sendUSPulse>:
 enum display_status display_state = CENTIMETER; // starting the display in CM
 
 
-void ultrasonic_send_pulse()
+void sendUSPulse()
 {
 	PORTB = 0x00; // 10 us low pulse
       c8:	18 ba       	out	0x18, r1	; 24
@@ -701,9 +701,6 @@ void writeDistanceToLCD()
      49c:	0f 90       	pop	r0
 	}
 	
-	
-	
-	
 	wait_ms(5000);
      49e:	88 e8       	ldi	r24, 0x88	; 136
      4a0:	93 e1       	ldi	r25, 0x13	; 19
@@ -724,7 +721,7 @@ void writeDistanceToLCD()
 000004ba <__vector_1>:
      4ba:	1f 92       	push	r1
 
-ISR(INT0_vect) // interrupt ultrasonic
+ISR(INT0_vect) 
 {
      4bc:	0f 92       	push	r0
      4be:	0f b6       	in	r0, 0x3f	; 63
@@ -732,47 +729,38 @@ ISR(INT0_vect) // interrupt ultrasonic
      4c2:	11 24       	eor	r1, r1
      4c4:	8f 93       	push	r24
      4c6:	9f 93       	push	r25
-	// if the interrupt was generated on a rising edge (start sending echo)
-	if (interrupt_state == INTERRUPT_RISING)
+		// INTERRUPT OP PD0 AANGEROEPEN
+		if (interrupt_state == INTERRUPT_RISING) // ALS DE INTERRUPT GEGENEREERD WERD DOOR EEN RISING EDGE
      4c8:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__DATA_REGION_ORIGIN__>
      4cc:	81 30       	cpi	r24, 0x01	; 1
      4ce:	41 f4       	brne	.+16     	; 0x4e0 <__vector_1+0x26>
-	{
-		// set interrupt pin 0 on PORTD to falling edge
-		EICRA = 0x02;
+		{
+		EICRA = 0x02; // DAN WILLEN WE NU DAT ER EEN INTERRUPT GEGENEREERD WORDT BIJ EEN FALLING EDGE (PD0)
      4d0:	82 e0       	ldi	r24, 0x02	; 2
      4d2:	80 93 6a 00 	sts	0x006A, r24	; 0x80006a <__TEXT_REGION_LENGTH__+0x7e006a>
-		
-		// reset the time in timer1
-		TCNT1 = 0x00;
+		TCNT1 = 0x00; // RESET DE TIJD VAN TIMER1
      4d6:	1d bc       	out	0x2d, r1	; 45
      4d8:	1c bc       	out	0x2c, r1	; 44
-		
-		// set interrupt status
-		interrupt_state = INTERRUPT_FALLING;
+		interrupt_state = INTERRUPT_FALLING; // INTERRUPT STATUS WORDT DUS FALLING, DOOR EICRA = 0x02; 
      4da:	10 92 00 01 	sts	0x0100, r1	; 0x800100 <__DATA_REGION_ORIGIN__>
      4de:	0c c0       	rjmp	.+24     	; 0x4f8 <__vector_1+0x3e>
-		} else 
-		// else if it was generated on a falling edge (end sending echo)
+		} 
+		
+		
+		else // ALS DE INTERRUPT NIET GEGENEREERD WERD DOOR EEN RISING, WAS HET WEL EEN FALLING EDGE (HET EINDE VAN DE ECHO DUS)
 		{
-		// set interrupt pin 0 on PORTD to rising edge
-		EICRA = 0x03;
+		EICRA = 0x03; // NU WILLEN WE WEER DAT DE INTERRUPT GEGENEREERD WORDT BIJ EEN RISING EDGE (PD0)
      4e0:	83 e0       	ldi	r24, 0x03	; 3
      4e2:	80 93 6a 00 	sts	0x006A, r24	; 0x80006a <__TEXT_REGION_LENGTH__+0x7e006a>
-		
-		// read timer1 into time_dist
-		timer_dist = TCNT1;
+		timer_dist = TCNT1; // TIJD INLEZEN NAAR VARIABEL timer_dist
      4e6:	8c b5       	in	r24, 0x2c	; 44
      4e8:	9d b5       	in	r25, 0x2d	; 45
      4ea:	90 93 02 01 	sts	0x0102, r25	; 0x800102 <timer_dist+0x1>
      4ee:	80 93 01 01 	sts	0x0101, r24	; 0x800101 <timer_dist>
-		
-		// set interrupt status
-		interrupt_state = INTERRUPT_RISING;
+		interrupt_state = INTERRUPT_RISING; // INTERRUPT STATUS WORDT DUS RISING, DOOR EICRA = 0x03; 
      4f2:	81 e0       	ldi	r24, 0x01	; 1
      4f4:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__DATA_REGION_ORIGIN__>
-	}
-	
+		}
 }
      4f8:	9f 91       	pop	r25
      4fa:	8f 91       	pop	r24
@@ -794,7 +782,7 @@ int main( void )
 	EICRA = 0x03; // interrupt PORTD on pin 0, rising edge
      508:	83 e0       	ldi	r24, 0x03	; 3
      50a:	80 93 6a 00 	sts	0x006A, r24	; 0x80006a <__TEXT_REGION_LENGTH__+0x7e006a>
-	EIMSK |= 0x01; // enable interrupt on pin 0 (INT0)
+	EIMSK |= 0x01; // enable interrupt on pin 0 (INT0) , When set to '1' then the External Interrupt feature is enabled.
      50e:	89 b7       	in	r24, 0x39	; 57
      510:	81 60       	ori	r24, 0x01	; 1
      512:	89 bf       	out	0x39, r24	; 57
@@ -805,13 +793,12 @@ int main( void )
      518:	8e bd       	out	0x2e, r24	; 46
 	//TCCR1A and TCCR1B are different registers, but they work on the same timer, timer1. 
 	//They configure different behavior and are located in separate registers, simply because all the bits don't fit in a single byte.
-	
 	sei(); // sei sets the bit and switches interrupts on
+	
 	
 	init_4bits_mode(); // LCD Init 4 bit mode
      51a:	78 94       	sei
      51c:	56 d0       	rcall	.+172    	; 0x5ca <init_4bits_mode>
-	
 	lcd_write_string("Starting US....");
      51e:	88 e1       	ldi	r24, 0x18	; 24
      520:	91 e0       	ldi	r25, 0x01	; 1
@@ -825,8 +812,8 @@ int main( void )
 	
 	while (1)
 	{
-		ultrasonic_send_pulse();
-     52a:	ce dd       	rcall	.-1124   	; 0xc8 <ultrasonic_send_pulse>
+		sendUSPulse();
+     52a:	ce dd       	rcall	.-1124   	; 0xc8 <sendUSPulse>
      52c:	80 91 01 01 	lds	r24, 0x0101	; 0x800101 <timer_dist>
 		distance = timer_dist * (340 / 2 );
      530:	90 91 02 01 	lds	r25, 0x0102	; 0x800102 <timer_dist+0x1>
@@ -841,6 +828,7 @@ int main( void )
 		
 		//my measurements: 18cm is 5400, 8 cm is 2380
 		//which means 1cm is around 297, so we divide by it
+		
 		distanceInCM = round(distance / 297);
      548:	ce 01       	movw	r24, r28
      54a:	69 e2       	ldi	r22, 0x29	; 41
@@ -1108,7 +1096,7 @@ void configurePins(){
      69e:	87 bb       	out	0x17, r24	; 23
 	DDRD = 0x00; //	port D pin 0 on input. 0 is echo and also interrupt
      6a0:	11 ba       	out	0x11, r1	; 17
-	DDRG &= ~(1 << PING0);
+	DDRG &= ~(1 << PING0); // Setting PING0 bit in data direction, also called input
      6a2:	e4 e6       	ldi	r30, 0x64	; 100
      6a4:	f0 e0       	ldi	r31, 0x00	; 0
      6a6:	80 81       	ld	r24, Z
